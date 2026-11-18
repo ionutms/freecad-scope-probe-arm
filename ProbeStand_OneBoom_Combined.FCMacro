@@ -31,7 +31,7 @@ THE BASE (tensioning from the TOP, 20 mm high, open underneath, rounded for prin
   (858 mm cut instead of 594 mm). The stack between the booms hangs from the far cup of boom 1 where that cup opens (ELBOW_ANG[0], default 90 = sideways towards -y); boom 2 starts at its lower ball (the near cup opens back towards the stack), and the tip side
   hangs from the far cup of boom 2 (TIP_ANG, default 90): the arm is stretched out, the tip end at y = -492 mm (TIP_ANG = 270 folds it back into a Z, the tip then ends near the first stack). ARM_LINKS = 0 gives the old loose ball between two booms (J2).
   BALLAST: the 0.4 kg named under THE BASE was worked out for one boom (100 g at 267 mm). With the arm stretched out (tip at y = -492 mm, about 360 g of printed arm and probe) a rough estimate gives 1.5 .. 2 kg (not verified; a folded pose or the start pose needs far less): or clamp the base to the table.
-  PRICE: the holding margins fall. The wire loses exp(-0.25 * pi / 2) = 0.675 of its tension in each of the two bends of every boom (0.456 per boom), and the lever arm of the 100 g test weight grows from 267 to 492 mm: worst-case margin x0.29 at J2a
+  PRICE: the holding margins fall. The wire loses exp(-0.25 * pi / 2) = 0.675 of its tension in each of the two bends of every boom (0.456 per boom), and the lever arm of the 100 g test weight grows from 267 to 492 mm: worst-case margin x0.34 at J2a
   (before: x0.71). Remedies: less friction in the bends (MU_W: PTFE tube in the end pieces, lubricated wire: 0.10 gives 0.73 per boom), TPU seats, a lighter probe, a shorter M_LEN, a folded pose.
   COLLISION TEST SPEED AND SAFETY (v47): the pose panel tests every move for new overlaps with boolean operations. (1) The three parts of one boom (end pieces and rod) are never tested against each other: a twist only turns them about their common
   axis, and the boolean operation between their coaxial faces never returned at some twist angles (FreeCAD froze while boom 2 was dragged). (2) A move stops at the first new overlap, the pair that blocked the last move is tried first, and while the mouse stays in a blocked
@@ -1830,6 +1830,9 @@ if App.GuiUp:
             self.mlen.setToolTip("Length of the %d M links (M0 .. M%d), ball centre to ball centre" % (NMLINK, NMLINK - 1))
             bm = QtWidgets.QPushButton("Rebuild"); bm.setToolTip("Rebuild the model with this M length (about 20 s)"); bm.clicked.connect(lambda _c=False: self._rebuild_m())
             g.addWidget(self.mlen, 6, 0); g.addWidget(bm, 6, 1)
+            # row 7: STEP export of every printed part (one file per part, no wire, ferrules or probe)
+            bx = QtWidgets.QPushButton("Export STEP"); bx.setToolTip("Write one STEP file per printed part (base, stand end, slider, tension screw, M link, DC connector, end piece, rod, probe holder, clamp screw) into a folder you choose")
+            bx.clicked.connect(lambda _c=False: self._export_step()); g.addWidget(bx, 7, 0, 1, 2)
             lay.addLayout(g)
             lay.addStretch(1)         # no status line and no results box in the panel: messages go to the FreeCAD status bar and the Report view
             return w
@@ -1837,6 +1840,15 @@ if App.GuiUp:
             v = self.mlen.value()
             if abs(v - float(M_LEN)) < 1e-9 and M_LEN_TIP <= 0: self.ctrl.say("the M links are already %d mm long" % v); return
             QtCore.QTimer.singleShot(0, lambda: _rebuild_with({"M_LEN": float(v), "M_LEN_TIP": 0}))      # after this click: the panel is replaced
+        def _export_step(self):
+            start = globals().get("_STEP_DIR") or os.path.join(os.path.expanduser("~"), "Documents")
+            folder = QtWidgets.QFileDialog.getExistingDirectory(self, "Folder for the STEP files", start)
+            if not folder: return
+            try:
+                export_step(folder); globals()["_STEP_DIR"] = folder
+                self.ctrl.say("STEP files written to %s" % folder)
+            except Exception as _e:
+                self.ctrl.say("STEP export failed: %s" % _e)
         def _step(self, d):
             i = (JOINTS.index(self.ctrl.sel) + d) % len(JOINTS); self.ctrl.select(JOINTS[i])
         def sync(self):
