@@ -1333,8 +1333,9 @@ def export_stl(folder):
     print("STL files written to", folder)
 
 def export_step(folder):
-    """one STEP file per distinct printed component (no wire, no ferrules, no dummy probe). The base, stand end, slider, tension screw, probe holder and clamp screw
-    are in their print orientation (same as the STL files); M link, DC connector, end piece and rod are in their own design frame (ball centres on the z axis).
+    """one STEP file per distinct printed component (no wire, no ferrules, no dummy probe), every part in its PRINT ORIENTATION on the bed plane z = 0:
+    base upside down, stand end on its end wall, slider and tension screw standing on their ends, holder on its bed face, clamp screw on its knob, M link and DC connector
+    standing on their axis (a ball or a rim on the bed), end piece cup up (design frame turned 180 deg about x), rod standing on one end (axis x turned to z).
     The console prints how many copies of each to print (m_link.step: print six)"""
     os.makedirs(folder, exist_ok=True)
     _b = BASE_SHAPE.copy(); _b.rotate(V(0, 0, 0), V(1, 0, 0), 180); _b.translate(V(0, 0, -_b.BoundBox.ZMin))
@@ -1343,9 +1344,13 @@ def export_step(folder):
     _sc = SCREW_PRINT.copy(); _sc.translate(V(0, 0, -_sc.BoundBox.ZMin))
     nM = sum(1 for n in OBJ if ROLE[n] == "printed" and n.startswith("M") and n[1:].isdigit())
     nDC = sum(1 for n in OBJ if ROLE[n] == "printed" and n.startswith("DC"))
+    def _onbed(shp, axis=None, ang=0.0):
+        c = shp.copy()
+        if axis is not None: c.rotate(V(0, 0, 0), V(*axis), ang)
+        c.translate(V(0, 0, -c.BoundBox.ZMin)); return c
     jobs = [("Stand_base_x1", _b), ("Stand_end_x1" if (TIP_PROBE or not SAME_END) else "Stand_end_x2", _te), ("Slider_x1" if TIP_PROBE else "Slider_x2", _sl), ("Tension_screw_x1" if TIP_PROBE else "Tension_screw_x2", _sc),
-            ("M_link_x%d" % nM, _SH_M), ("End_piece_x%d" % (2 * NBOOM), EP), ("Rod_x%d" % NBOOM, ROD)]
-    if _SH_DC is not None: jobs.append(("DC_connector_x%d" % nDC, _SH_DC))
+            ("M_link_x%d" % nM, _onbed(_SH_M)), ("End_piece_x%d" % (2 * NBOOM), _onbed(EP, (1, 0, 0), 180.0)), ("Rod_x%d" % NBOOM, _onbed(ROD, (0, 1, 0), -90.0))]
+    if _SH_DC is not None: jobs.append(("DC_connector_x%d" % nDC, _onbed(_SH_DC)))
     if TIP_PROBE:
         _h = TIP_HOLDER.copy(); _h.translate(V(0, 0, -_h.BoundBox.ZMin))
         _c = CLAMP_SCREW.copy(); _c.rotate(V(0, 0, 0), V(1, 0, 0), 90.0); _c.translate(V(0, 0, -_c.BoundBox.ZMin))
