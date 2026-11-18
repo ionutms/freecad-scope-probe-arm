@@ -46,7 +46,7 @@ Not printed: about 860 mm of wire (a 2.5 mm stainless wire or string) with two c
 
 The `models/` folder has a STEP file for every printed part, made at the default sizes. The files do not include the wire, the ferrules or the stand-in probe. The base, stand end, slider, tension screw, probe holder and clamp screw are turned the way they are printed (flat on the bed plane z = 0). The M link, DC connector, end piece and rod are in the frame of the macro (the ball centres are on the z axis), not in a print orientation.
 
-To make the files again after changing a setting, run this in the FreeCAD Python console (it builds the model without the panel and writes the folder):
+To make the files again after changing a setting, run the macro and press **Export STEP** in the panel. Without the panel (or to script it), run this in the FreeCAD Python console; it builds the model without the panel and writes the folder:
 
 ```python
 import os
@@ -74,6 +74,7 @@ The first run takes about 25 to 30 seconds. The slow parts (the threaded parts, 
 - **Gizmo step** sets the angle of one arrow-key step and the snap of a ring drag; **Gizmo size** scales the gizmo.
 - **Reset joint** and **Reset all** go back to the neutral (stretched) pose. The arm starts in `START_POSE`, the pose in the first picture.
 - **M length** + **Rebuild** changes the length of all M links (36 .. 120 mm) and rebuilds the model (about 20 seconds). The pose is kept if it is still free of collisions.
+- **Export STEP** asks for a folder and writes one STEP file per printed part into it (see [3D models](#3d-models)). The files do not depend on the pose.
 
 ## Settings
 
@@ -105,7 +106,9 @@ For every joint the macro compares the holding torque of the wire friction with 
 
 | Joint | J0a | J0b | J1a | J1b | J2a | J2b | J2c | J2d | J3a | J3b | J3c | J3d |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Margin | 0.43 | 0.46 | 0.50 | 0.54 | 0.29 | 0.34 | 0.39 | 0.48 | 0.32 | 0.44 | 0.65 | 1.30 |
+| Margin | 0.48 | 0.52 | 0.57 | 0.64 | 0.34 | 0.40 | 0.48 | 0.60 | 0.45 | 0.65 | 0.98 | 1.60 |
+
+The macro prints this table (with the torques) in the FreeCAD report view every time it runs.
 
 With one boom the margins were more than twice as good (the worst joint, J2a, was 0.71). Each boom costs about half of the wire tension (0.456: the wire rubs in the two bends of the end pieces), and the load arm of the probe grows from 267 mm to 492 mm. What helps: less friction in the bends (a PTFE tube or a lubricated wire: `MU_W` 0.10 gives 0.73 per boom instead of 0.456), TPU seats, a lighter probe, shorter M links, or a folded pose. The wire friction is an assumption (`MU_W` = 0.25), so real numbers need a print test.
 
